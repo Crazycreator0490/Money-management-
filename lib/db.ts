@@ -1,7 +1,5 @@
-import { neon } from "@neondatabase/serverless"
+import { executeQuery } from "./neon-client"
 import { ensureTablesExist } from "./db-init"
-
-const sql = neon(process.env.DATABASE_URL!)
 
 export type IncomeSource = {
   id: number
@@ -38,27 +36,27 @@ export type SavingsGoal = {
 // Income Sources
 export async function getIncomeSources(userId: number): Promise<IncomeSource[]> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<IncomeSource>`
     SELECT id, name, amount FROM income_sources 
     WHERE user_id = ${userId} 
     ORDER BY created_at DESC
   `
-  return result as IncomeSource[]
+  return result
 }
 
 export async function createIncomeSource(userId: number, name: string, amount: number): Promise<IncomeSource> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<IncomeSource>`
     INSERT INTO income_sources (user_id, name, amount)
     VALUES (${userId}, ${name}, ${amount})
     RETURNING id, name, amount
   `
-  return result[0] as IncomeSource
+  return result[0]
 }
 
 export async function deleteIncomeSource(userId: number, id: number): Promise<void> {
   await ensureTablesExist()
-  await sql`
+  await executeQuery`
     DELETE FROM income_sources 
     WHERE id = ${id} AND user_id = ${userId}
   `
@@ -67,13 +65,13 @@ export async function deleteIncomeSource(userId: number, id: number): Promise<vo
 // Budget Categories
 export async function getBudgetCategories(userId: number): Promise<BudgetCategory[]> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<BudgetCategory>`
     SELECT id, name, planned_amount, actual_amount, color 
     FROM budget_categories 
     WHERE user_id = ${userId} 
     ORDER BY created_at DESC
   `
-  return result as BudgetCategory[]
+  return result
 }
 
 export async function createBudgetCategory(
@@ -83,17 +81,17 @@ export async function createBudgetCategory(
   color: string,
 ): Promise<BudgetCategory> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<BudgetCategory>`
     INSERT INTO budget_categories (user_id, name, planned_amount, color)
     VALUES (${userId}, ${name}, ${plannedAmount}, ${color})
     RETURNING id, name, planned_amount, actual_amount, color
   `
-  return result[0] as BudgetCategory
+  return result[0]
 }
 
 export async function updateBudgetCategoryActual(userId: number, id: number, actualAmount: number): Promise<void> {
   await ensureTablesExist()
-  await sql`
+  await executeQuery`
     UPDATE budget_categories 
     SET actual_amount = ${actualAmount}, updated_at = CURRENT_TIMESTAMP
     WHERE id = ${id} AND user_id = ${userId}
@@ -102,7 +100,7 @@ export async function updateBudgetCategoryActual(userId: number, id: number, act
 
 export async function deleteBudgetCategory(userId: number, id: number): Promise<void> {
   await ensureTablesExist()
-  await sql`
+  await executeQuery`
     DELETE FROM budget_categories 
     WHERE id = ${id} AND user_id = ${userId}
   `
@@ -111,14 +109,14 @@ export async function deleteBudgetCategory(userId: number, id: number): Promise<
 // Expenses
 export async function getExpenses(userId: number, limit = 50): Promise<Expense[]> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<Expense>`
     SELECT id, amount, description, category, expense_date, created_at
     FROM expenses 
     WHERE user_id = ${userId} 
     ORDER BY expense_date DESC, created_at DESC
     LIMIT ${limit}
   `
-  return result as Expense[]
+  return result
 }
 
 export async function createExpense(
@@ -129,24 +127,24 @@ export async function createExpense(
   expenseDate: string,
 ): Promise<Expense> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<Expense>`
     INSERT INTO expenses (user_id, amount, description, category, expense_date)
     VALUES (${userId}, ${amount}, ${description}, ${category}, ${expenseDate})
     RETURNING id, amount, description, category, expense_date, created_at
   `
-  return result[0] as Expense
+  return result[0]
 }
 
 // Savings Goals
 export async function getSavingsGoals(userId: number): Promise<SavingsGoal[]> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<SavingsGoal>`
     SELECT id, goal_name, target_amount, current_amount, monthly_contribution, target_date
     FROM savings_goals 
     WHERE user_id = ${userId} 
     ORDER BY created_at DESC
   `
-  return result as SavingsGoal[]
+  return result
 }
 
 export async function createSavingsGoal(
@@ -156,12 +154,12 @@ export async function createSavingsGoal(
   monthlyContribution: number,
 ): Promise<SavingsGoal> {
   await ensureTablesExist()
-  const result = await sql`
+  const result = await executeQuery<SavingsGoal>`
     INSERT INTO savings_goals (user_id, goal_name, target_amount, monthly_contribution)
     VALUES (${userId}, ${goalName}, ${targetAmount}, ${monthlyContribution})
     RETURNING id, goal_name, target_amount, current_amount, monthly_contribution, target_date
   `
-  return result[0] as SavingsGoal
+  return result[0]
 }
 
 // Bulk operations for templates
@@ -173,12 +171,12 @@ export async function createBulkIncomeAndCategories(
   await ensureTablesExist()
 
   // Clear existing data
-  await sql`DELETE FROM income_sources WHERE user_id = ${userId}`
-  await sql`DELETE FROM budget_categories WHERE user_id = ${userId}`
+  await executeQuery`DELETE FROM income_sources WHERE user_id = ${userId}`
+  await executeQuery`DELETE FROM budget_categories WHERE user_id = ${userId}`
 
   // Insert income sources
   for (const income of incomes) {
-    await sql`
+    await executeQuery`
       INSERT INTO income_sources (user_id, name, amount)
       VALUES (${userId}, ${income.name}, ${income.amount})
     `
@@ -186,7 +184,7 @@ export async function createBulkIncomeAndCategories(
 
   // Insert budget categories
   for (const category of categories) {
-    await sql`
+    await executeQuery`
       INSERT INTO budget_categories (user_id, name, planned_amount, color)
       VALUES (${userId}, ${category.name}, ${category.amount}, ${category.color})
     `

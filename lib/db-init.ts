@@ -33,37 +33,43 @@ export async function ensureTablesExist(): Promise<void> {
 }
 
 async function createAllTables(): Promise<void> {
-  const tables = [
-    // Users table
-    `CREATE TABLE IF NOT EXISTS users (
+  // Create users table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash VARCHAR(255) NOT NULL,
       name VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    )
+  `
 
-    // Sessions table
-    `CREATE TABLE IF NOT EXISTS sessions (
+  // Create sessions table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS sessions (
       id VARCHAR(64) PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       expires_at TIMESTAMP NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    )
+  `
 
-    // Income sources table
-    `CREATE TABLE IF NOT EXISTS income_sources (
+  // Create income sources table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS income_sources (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255) NOT NULL,
       amount DECIMAL(10,2) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    )
+  `
 
-    // Budget categories table
-    `CREATE TABLE IF NOT EXISTS budget_categories (
+  // Create budget categories table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS budget_categories (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255) NOT NULL,
@@ -72,10 +78,12 @@ async function createAllTables(): Promise<void> {
       color VARCHAR(50) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    )
+  `
 
-    // Expenses table
-    `CREATE TABLE IF NOT EXISTS expenses (
+  // Create expenses table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS expenses (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       amount DECIMAL(10,2) NOT NULL,
@@ -83,10 +91,12 @@ async function createAllTables(): Promise<void> {
       category VARCHAR(100) NOT NULL,
       expense_date DATE NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    )
+  `
 
-    // Savings goals table
-    `CREATE TABLE IF NOT EXISTS savings_goals (
+  // Create savings goals table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS savings_goals (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       goal_name VARCHAR(255) NOT NULL,
@@ -96,10 +106,12 @@ async function createAllTables(): Promise<void> {
       target_date DATE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
+    )
+  `
 
-    // User progress table
-    `CREATE TABLE IF NOT EXISTS user_progress (
+  // Create user progress table
+  await executeQuery`
+    CREATE TABLE IF NOT EXISTS user_progress (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       milestone_name VARCHAR(255) NOT NULL,
@@ -108,29 +120,18 @@ async function createAllTables(): Promise<void> {
       is_current BOOLEAN DEFAULT FALSE,
       completed_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-  ]
-
-  // Create tables sequentially to handle dependencies
-  for (const tableSQL of tables) {
-    await executeQuery`${tableSQL}`
-  }
+    )
+  `
 
   // Create indexes
-  const indexes = [
-    "CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)",
-    "CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at)",
-    "CREATE INDEX IF NOT EXISTS idx_income_sources_user_id ON income_sources(user_id)",
-    "CREATE INDEX IF NOT EXISTS idx_budget_categories_user_id ON budget_categories(user_id)",
-    "CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id)",
-    "CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date)",
-    "CREATE INDEX IF NOT EXISTS idx_savings_goals_user_id ON savings_goals(user_id)",
-    "CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id)",
-  ]
-
-  for (const indexSQL of indexes) {
-    await executeQuery`${indexSQL}`
-  }
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_income_sources_user_id ON income_sources(user_id)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_budget_categories_user_id ON budget_categories(user_id)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_savings_goals_user_id ON savings_goals(user_id)`
+  await executeQuery`CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id)`
 }
 
 // Database migration system

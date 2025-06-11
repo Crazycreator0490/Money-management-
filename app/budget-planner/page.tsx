@@ -1,4 +1,3 @@
-"use client"
 import { requireAuth } from "@/lib/auth"
 import { getIncomeSources, getBudgetCategories } from "@/lib/db"
 import BudgetPlannerClient from "@/components/budget-planner-client"

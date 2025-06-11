@@ -84,7 +84,6 @@ export default async function SavingsCalculator() {
 //           </div>
 
 //           <button type="submit" className="btn btn-primary flex items-center gap-2">
-//             <Calculator size={18} />
 //             <span>Calculate Time</span>
 //           </button>
 //         </form>
