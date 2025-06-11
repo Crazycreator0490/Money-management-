@@ -64,7 +64,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-50 text-gray-800;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
