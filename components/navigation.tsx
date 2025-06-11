@@ -2,72 +2,42 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { Calculator, PiggyBank, TrendingUp, BookOpen, HelpCircle, Home } from "lucide-react"
+
+const navItems = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/budget-planner", label: "Budget Planner", icon: Calculator },
+  { href: "/expense-tracker", label: "Expense Tracker", icon: TrendingUp },
+  { href: "/savings-calculator", label: "Savings Calculator", icon: PiggyBank },
+  { href: "/financial-terms", label: "Financial Terms", icon: BookOpen },
+  { href: "/faq", label: "FAQ", icon: HelpCircle },
+]
 
 export default function Navigation() {
   const pathname = usePathname()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const links = [
-    { href: "/", label: "Home" },
-    { href: "/expense-tracker", label: "Expense Tracker" },
-    { href: "/savings-calculator", label: "Savings Calculator" },
-    { href: "/budget-planner", label: "Budget Planner" },
-    { href: "/financial-terms", label: "Financial Terms" },
-    { href: "/progress", label: "My Progress" },
-    { href: "/faq", label: "FAQs" },
-  ]
 
   return (
-    <nav className="bg-white shadow-sm py-4 sticky top-0 z-10">
+    <nav className="bg-blue-600 text-white shadow-lg">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="flex justify-between items-center">
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+        <div className="flex flex-wrap justify-center gap-1 py-4">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
 
-          <div className="hidden md:flex space-x-6">
-            {links.map((link) => (
+            return (
               <Link
-                key={link.href}
-                href={link.href}
-                className={`text-sm font-medium transition-colors ${
-                  pathname === link.href
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-blue-600"
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  isActive ? "bg-blue-700 text-white font-medium" : "text-blue-100 hover:bg-blue-500 hover:text-white"
                 }`}
               >
-                {link.label}
+                <Icon size={18} />
+                <span className="hidden sm:inline">{item.label}</span>
               </Link>
-            ))}
-          </div>
+            )
+          })}
         </div>
-
-        {/* Mobile menu */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-4 space-y-2">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`block py-2 px-3 rounded-md ${
-                  pathname === link.href
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
     </nav>
   )

@@ -5,43 +5,36 @@ import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import Navigation from "@/components/navigation"
-import ErrorBoundary from "@/components/error-boundary"
-import { getCurrentUser } from "@/lib/auth-system"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "My Financial Journey",
-  description: "Starting from scratch, learning step by step.",
+  description: "Starting from scratch, learning step by step - A comprehensive financial education platform",
+  keywords: "financial education, budgeting, savings, expense tracking, financial literacy",
+  authors: [{ name: "Financial Journey Team" }],
+  openGraph: {
+    title: "My Financial Journey",
+    description: "Starting from scratch, learning step by step",
+    type: "website",
+  },
     generator: 'v0.dev'
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  let user = null
-
-  try {
-    user = await getCurrentUser()
-  } catch (error) {
-    console.error("Error getting current user:", error)
-  }
-
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-50 text-gray-800`}>
-        <ErrorBoundary>
-          <div className="min-h-screen flex flex-col">
-            <Header user={user} />
-            {user && <Navigation />}
-            <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
-              <ErrorBoundary>{children}</ErrorBoundary>
-            </main>
-            <Footer />
-          </div>
-        </ErrorBoundary>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <Navigation />
+          <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   )
