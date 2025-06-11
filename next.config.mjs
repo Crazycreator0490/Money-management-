@@ -8,9 +8,14 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   
-  // Image optimization
+  // Image optimization for static export
   images: {
     unoptimized: true,
+  },
+  
+  // Webpack configuration
+  webpack: (config) => {
+    return config
   },
   
   // Headers for security
