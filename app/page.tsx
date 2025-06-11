@@ -1,26 +1,23 @@
 import { getCurrentUser } from "@/lib/auth"
-import { redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import QuickTemplateSelector from "@/components/quick-template-selector"
-import DatabaseStatus from "@/components/database-status"
-// Import the AddSpecificUser component
-import AddSpecificUser from "@/components/add-specific-user"
+import DeploymentVerification from "@/components/deployment-verification"
+import LandingPage from "@/components/landing-page"
 
 export default async function Home() {
   const user = await getCurrentUser()
 
+  // Show landing page for unauthenticated users
   if (!user) {
-    redirect("/auth/login")
+    return <LandingPage />
   }
 
+  // Show dashboard for authenticated users
   return (
     <div className="space-y-12">
-      {/* Database Status - Remove this in production */}
-      <DatabaseStatus />
-
-      {/* Add Specific User - Remove this in production */}
-      <AddSpecificUser />
+      {/* Deployment Verification - Remove this in production */}
+      <DeploymentVerification />
 
       <section className="section">
         <h2 className="text-2xl font-bold mb-4">1. My Start</h2>
