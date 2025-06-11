@@ -1,5 +1,5 @@
-import { requireAuth } from "@/lib/auth"
-import { getIncomeSources, getBudgetCategories } from "@/lib/db"
+import { requireAuth } from "@/lib/auth-system"
+import { getIncomeSources, getBudgetCategories } from "@/lib/data-operations"
 import BudgetPlannerClient from "@/components/budget-planner-client"
 
 export default async function BudgetPlanner() {

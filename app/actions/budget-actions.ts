@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireAuth } from "@/lib/auth"
+import { requireAuth } from "@/lib/auth-system"
 import {
   createIncomeSource,
   deleteIncomeSource,
@@ -9,7 +9,7 @@ import {
   updateBudgetCategoryActual,
   deleteBudgetCategory,
   createBulkIncomeAndCategories,
-} from "@/lib/db"
+} from "@/lib/data-operations"
 
 export async function addIncomeSource(name: string, amount: number) {
   const user = await requireAuth()

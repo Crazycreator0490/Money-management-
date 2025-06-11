@@ -1,6 +1,6 @@
 "use client"
-import { requireAuth } from "@/lib/auth"
-import { getSavingsGoals } from "@/lib/db"
+import { requireAuth } from "@/lib/auth-system"
+import { getSavingsGoals } from "@/lib/data-operations"
 import SavingsCalculatorClient from "@/components/savings-calculator-client"
 
 export default async function SavingsCalculator() {

@@ -1,5 +1,5 @@
-import { requireAuth } from "@/lib/auth"
-import { getExpenses } from "@/lib/db"
+import { requireAuth } from "@/lib/auth-system"
+import { getExpenses } from "@/lib/data-operations"
 import ExpenseTrackerClient from "@/components/expense-tracker-client"
 
 export default async function ExpenseTracker() {

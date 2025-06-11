@@ -1,9 +1,9 @@
-import { getCurrentUser } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/auth-system"
 import Image from "next/image"
 import Link from "next/link"
 import QuickTemplateSelector from "@/components/quick-template-selector"
-import DeploymentVerification from "@/components/deployment-verification"
 import LandingPage from "@/components/landing-page"
+import EnvironmentStatus from "@/components/environment-status"
 
 export default async function Home() {
   const user = await getCurrentUser()
@@ -16,9 +16,7 @@ export default async function Home() {
   // Show dashboard for authenticated users
   return (
     <div className="space-y-12">
-      {/* Deployment Verification - Remove this in production */}
-      <DeploymentVerification />
-
+      <EnvironmentStatus />
       <section className="section">
         <h2 className="text-2xl font-bold mb-4">1. My Start</h2>
         <div className="flex flex-col md:flex-row items-center gap-6">

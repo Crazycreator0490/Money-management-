@@ -1,28 +1,16 @@
 import { NextResponse } from "next/server"
-import { checkNeonConnection, getConnectionInfo } from "@/lib/neon-client"
-import { getInitializationStatus } from "@/lib/db-init"
-import { env, validateEnvironment, getDatabaseConnectionDetails } from "@/lib/env"
+import { checkDatabaseHealth } from "@/lib/database"
+import { validateEnvironment, envConfig } from "@/lib/env-config"
 
 export async function GET() {
   const startTime = Date.now()
 
   try {
-    console.log("🔍 Starting comprehensive health check...")
-
     // Environment validation
     const envValidation = validateEnvironment()
 
-    // Database connection check
-    const dbHealth = await checkNeonConnection()
-
-    // Connection info
-    const connectionInfo = await getConnectionInfo()
-
-    // Database connection details
-    const dbDetails = getDatabaseConnectionDetails()
-
-    // Database initialization status
-    const initStatus = getInitializationStatus()
+    // Database health check
+    const dbHealth = await checkDatabaseHealth()
 
     const responseTime = Date.now() - startTime
 
@@ -33,21 +21,10 @@ export async function GET() {
 
       environment: {
         validation: envValidation,
-        nodeEnv: env.NODE_ENV,
-        isVercel: !!env.VERCEL_URL,
-        vercelEnv: env.VERCEL_ENV || "not-set",
-        customKeyConfigured: !!env.CUSTOM_KEY,
-        sessionSecretConfigured: !!env.SESSION_SECRET,
-        variables: {
-          DATABASE_URL: !!env.DATABASE_URL,
-          POSTGRES_HOST: !!env.POSTGRES_HOST,
-          POSTGRES_USER: !!env.POSTGRES_USER,
-          POSTGRES_PASSWORD: !!env.POSTGRES_PASSWORD,
-          POSTGRES_DATABASE: !!env.POSTGRES_DATABASE,
-          CUSTOM_KEY: !!env.CUSTOM_KEY,
-          SESSION_SECRET: !!env.SESSION_SECRET,
-          NEXTAUTH_URL: !!env.NEXTAUTH_URL,
-        },
+        nodeEnv: envConfig.app.nodeEnv,
+        isVercel: !!envConfig.app.vercelUrl,
+        customKeyConfigured: envConfig.app.customKey !== "default-key",
+        features: envConfig.features,
       },
 
       database: {
@@ -55,11 +32,7 @@ export async function GET() {
         latency: dbHealth.latency,
         error: dbHealth.error,
         details: dbHealth.details,
-        initialization: initStatus,
-        connectionDetails: dbDetails,
       },
-
-      connection: connectionInfo,
 
       system: {
         memory: process.memoryUsage(),
@@ -68,13 +41,6 @@ export async function GET() {
         platform: process.platform,
       },
     }
-
-    console.log("✅ Health check completed:", {
-      status: health.status,
-      responseTime: health.responseTime,
-      dbHealthy: dbHealth.healthy,
-      envValid: envValidation.valid,
-    })
 
     return NextResponse.json(health, {
       status: health.status === "healthy" ? 200 : 503,
@@ -89,9 +55,6 @@ export async function GET() {
         timestamp: new Date().toISOString(),
         responseTime,
         error: error instanceof Error ? error.message : "Unknown error",
-        details: {
-          stack: error instanceof Error ? error.stack : undefined,
-        },
       },
       { status: 500 },
     )

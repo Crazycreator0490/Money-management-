@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { LogOut, UserIcon } from "lucide-react"
-import type { User } from "@/lib/auth"
+import type { User } from "@/lib/auth-system"
 
 type HeaderProps = {
   user: User | null

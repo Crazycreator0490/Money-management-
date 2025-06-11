@@ -1,8 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireAuth } from "@/lib/auth"
-import { createExpense } from "@/lib/db"
+import { requireAuth } from "@/lib/auth-system"
+import { createExpense } from "@/lib/data-operations"
 
 export async function addExpense(amount: number, description: string, category: string, expenseDate: string) {
   const user = await requireAuth()

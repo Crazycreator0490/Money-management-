@@ -6,7 +6,7 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import Navigation from "@/components/navigation"
 import ErrorBoundary from "@/components/error-boundary"
-import { getCurrentUser } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/auth-system"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,7 +27,6 @@ export default async function RootLayout({
     user = await getCurrentUser()
   } catch (error) {
     console.error("Error getting current user:", error)
-    // Continue without user - they'll be redirected to login if needed
   }
 
   return (

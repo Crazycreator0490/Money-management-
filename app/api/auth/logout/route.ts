@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { invalidateSession } from "@/lib/auth"
-import { isProduction } from "@/lib/env"
+import { invalidateSession } from "@/lib/auth-system"
+import { envConfig } from "@/lib/env-config"
 
 export async function POST() {
   try {
@@ -17,7 +17,7 @@ export async function POST() {
     // Clear session cookie
     response.cookies.set("session", "", {
       httpOnly: true,
-      secure: isProduction(),
+      secure: envConfig.app.nodeEnv === "production",
       sameSite: "lax",
       maxAge: 0,
       path: "/",
@@ -31,7 +31,7 @@ export async function POST() {
     const response = NextResponse.json({ success: true })
     response.cookies.set("session", "", {
       httpOnly: true,
-      secure: isProduction(),
+      secure: envConfig.app.nodeEnv === "production",
       sameSite: "lax",
       maxAge: 0,
       path: "/",
