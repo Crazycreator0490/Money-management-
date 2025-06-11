@@ -16,6 +16,7 @@
     "react": "^19",
     "react-dom": "^19",
     "recharts": "latest",
+    "shadcn": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   },
