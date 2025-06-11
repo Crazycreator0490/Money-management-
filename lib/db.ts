@@ -1,4 +1,4 @@
-import { executeQuery } from "./neon-client"
+import { simpleQuery } from "./neon-client"
 import { ensureTablesExist } from "./db-init"
 
 export type IncomeSource = {
@@ -36,41 +36,34 @@ export type SavingsGoal = {
 // Income Sources
 export async function getIncomeSources(userId: number): Promise<IncomeSource[]> {
   await ensureTablesExist()
-  const result = await executeQuery<IncomeSource>`
-    SELECT id, name, amount FROM income_sources 
-    WHERE user_id = ${userId} 
-    ORDER BY created_at DESC
-  `
+  const result = await simpleQuery<IncomeSource>(
+    "SELECT id, name, amount FROM income_sources WHERE user_id = $1 ORDER BY created_at DESC",
+    [userId],
+  )
   return result
 }
 
 export async function createIncomeSource(userId: number, name: string, amount: number): Promise<IncomeSource> {
   await ensureTablesExist()
-  const result = await executeQuery<IncomeSource>`
-    INSERT INTO income_sources (user_id, name, amount)
-    VALUES (${userId}, ${name}, ${amount})
-    RETURNING id, name, amount
-  `
+  const result = await simpleQuery<IncomeSource>(
+    "INSERT INTO income_sources (user_id, name, amount) VALUES ($1, $2, $3) RETURNING id, name, amount",
+    [userId, name, amount],
+  )
   return result[0]
 }
 
 export async function deleteIncomeSource(userId: number, id: number): Promise<void> {
   await ensureTablesExist()
-  await executeQuery`
-    DELETE FROM income_sources 
-    WHERE id = ${id} AND user_id = ${userId}
-  `
+  await simpleQuery("DELETE FROM income_sources WHERE id = $1 AND user_id = $2", [id, userId])
 }
 
 // Budget Categories
 export async function getBudgetCategories(userId: number): Promise<BudgetCategory[]> {
   await ensureTablesExist()
-  const result = await executeQuery<BudgetCategory>`
-    SELECT id, name, planned_amount, actual_amount, color 
-    FROM budget_categories 
-    WHERE user_id = ${userId} 
-    ORDER BY created_at DESC
-  `
+  const result = await simpleQuery<BudgetCategory>(
+    "SELECT id, name, planned_amount, actual_amount, color FROM budget_categories WHERE user_id = $1 ORDER BY created_at DESC",
+    [userId],
+  )
   return result
 }
 
@@ -81,41 +74,33 @@ export async function createBudgetCategory(
   color: string,
 ): Promise<BudgetCategory> {
   await ensureTablesExist()
-  const result = await executeQuery<BudgetCategory>`
-    INSERT INTO budget_categories (user_id, name, planned_amount, color)
-    VALUES (${userId}, ${name}, ${plannedAmount}, ${color})
-    RETURNING id, name, planned_amount, actual_amount, color
-  `
+  const result = await simpleQuery<BudgetCategory>(
+    "INSERT INTO budget_categories (user_id, name, planned_amount, color) VALUES ($1, $2, $3, $4) RETURNING id, name, planned_amount, actual_amount, color",
+    [userId, name, plannedAmount, color],
+  )
   return result[0]
 }
 
 export async function updateBudgetCategoryActual(userId: number, id: number, actualAmount: number): Promise<void> {
   await ensureTablesExist()
-  await executeQuery`
-    UPDATE budget_categories 
-    SET actual_amount = ${actualAmount}, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ${id} AND user_id = ${userId}
-  `
+  await simpleQuery(
+    "UPDATE budget_categories SET actual_amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3",
+    [actualAmount, id, userId],
+  )
 }
 
 export async function deleteBudgetCategory(userId: number, id: number): Promise<void> {
   await ensureTablesExist()
-  await executeQuery`
-    DELETE FROM budget_categories 
-    WHERE id = ${id} AND user_id = ${userId}
-  `
+  await simpleQuery("DELETE FROM budget_categories WHERE id = $1 AND user_id = $2", [id, userId])
 }
 
 // Expenses
 export async function getExpenses(userId: number, limit = 50): Promise<Expense[]> {
   await ensureTablesExist()
-  const result = await executeQuery<Expense>`
-    SELECT id, amount, description, category, expense_date, created_at
-    FROM expenses 
-    WHERE user_id = ${userId} 
-    ORDER BY expense_date DESC, created_at DESC
-    LIMIT ${limit}
-  `
+  const result = await simpleQuery<Expense>(
+    "SELECT id, amount, description, category, expense_date, created_at FROM expenses WHERE user_id = $1 ORDER BY expense_date DESC, created_at DESC LIMIT $2",
+    [userId, limit],
+  )
   return result
 }
 
@@ -127,23 +112,20 @@ export async function createExpense(
   expenseDate: string,
 ): Promise<Expense> {
   await ensureTablesExist()
-  const result = await executeQuery<Expense>`
-    INSERT INTO expenses (user_id, amount, description, category, expense_date)
-    VALUES (${userId}, ${amount}, ${description}, ${category}, ${expenseDate})
-    RETURNING id, amount, description, category, expense_date, created_at
-  `
+  const result = await simpleQuery<Expense>(
+    "INSERT INTO expenses (user_id, amount, description, category, expense_date) VALUES ($1, $2, $3, $4, $5) RETURNING id, amount, description, category, expense_date, created_at",
+    [userId, amount, description, category, expenseDate],
+  )
   return result[0]
 }
 
 // Savings Goals
 export async function getSavingsGoals(userId: number): Promise<SavingsGoal[]> {
   await ensureTablesExist()
-  const result = await executeQuery<SavingsGoal>`
-    SELECT id, goal_name, target_amount, current_amount, monthly_contribution, target_date
-    FROM savings_goals 
-    WHERE user_id = ${userId} 
-    ORDER BY created_at DESC
-  `
+  const result = await simpleQuery<SavingsGoal>(
+    "SELECT id, goal_name, target_amount, current_amount, monthly_contribution, target_date FROM savings_goals WHERE user_id = $1 ORDER BY created_at DESC",
+    [userId],
+  )
   return result
 }
 
@@ -154,11 +136,10 @@ export async function createSavingsGoal(
   monthlyContribution: number,
 ): Promise<SavingsGoal> {
   await ensureTablesExist()
-  const result = await executeQuery<SavingsGoal>`
-    INSERT INTO savings_goals (user_id, goal_name, target_amount, monthly_contribution)
-    VALUES (${userId}, ${goalName}, ${targetAmount}, ${monthlyContribution})
-    RETURNING id, goal_name, target_amount, current_amount, monthly_contribution, target_date
-  `
+  const result = await simpleQuery<SavingsGoal>(
+    "INSERT INTO savings_goals (user_id, goal_name, target_amount, monthly_contribution) VALUES ($1, $2, $3, $4) RETURNING id, goal_name, target_amount, current_amount, monthly_contribution, target_date",
+    [userId, goalName, targetAmount, monthlyContribution],
+  )
   return result[0]
 }
 
@@ -171,22 +152,25 @@ export async function createBulkIncomeAndCategories(
   await ensureTablesExist()
 
   // Clear existing data
-  await executeQuery`DELETE FROM income_sources WHERE user_id = ${userId}`
-  await executeQuery`DELETE FROM budget_categories WHERE user_id = ${userId}`
+  await simpleQuery("DELETE FROM income_sources WHERE user_id = $1", [userId])
+  await simpleQuery("DELETE FROM budget_categories WHERE user_id = $1", [userId])
 
   // Insert income sources
   for (const income of incomes) {
-    await executeQuery`
-      INSERT INTO income_sources (user_id, name, amount)
-      VALUES (${userId}, ${income.name}, ${income.amount})
-    `
+    await simpleQuery("INSERT INTO income_sources (user_id, name, amount) VALUES ($1, $2, $3)", [
+      userId,
+      income.name,
+      income.amount,
+    ])
   }
 
   // Insert budget categories
   for (const category of categories) {
-    await executeQuery`
-      INSERT INTO budget_categories (user_id, name, planned_amount, color)
-      VALUES (${userId}, ${category.name}, ${category.amount}, ${category.color})
-    `
+    await simpleQuery("INSERT INTO budget_categories (user_id, name, planned_amount, color) VALUES ($1, $2, $3, $4)", [
+      userId,
+      category.name,
+      category.amount,
+      category.color,
+    ])
   }
 }

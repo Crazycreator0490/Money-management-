@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { randomBytes } from "crypto"
-import { executeQuery } from "./neon-client"
+import { simpleQuery } from "./neon-client"
 import { ensureTablesExist } from "./db-init"
 import { env } from "./env"
 
@@ -44,10 +44,11 @@ export async function createSession(userId: number): Promise<string> {
     const sessionToken = generateSessionToken()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-    await executeQuery`
-      INSERT INTO sessions (id, user_id, expires_at)
-      VALUES (${sessionToken}, ${userId}, ${expiresAt})
-    `
+    await simpleQuery("INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)", [
+      sessionToken,
+      userId,
+      expiresAt,
+    ])
 
     return sessionToken
   } catch (error) {
@@ -60,15 +61,15 @@ export async function validateSession(sessionToken: string): Promise<{ user: Use
   try {
     await ensureTablesExist()
 
-    const result = await executeQuery<{
+    const result = await simpleQuery<{
       session_id: string
       user_id: number
       expires_at: string
       id: number
       email: string
       name: string
-    }>`
-      SELECT 
+    }>(
+      `SELECT 
         s.id as session_id,
         s.user_id,
         s.expires_at,
@@ -77,8 +78,9 @@ export async function validateSession(sessionToken: string): Promise<{ user: Use
         u.name
       FROM sessions s
       JOIN users u ON s.user_id = u.id
-      WHERE s.id = ${sessionToken} AND s.expires_at > NOW()
-    `
+      WHERE s.id = $1 AND s.expires_at > NOW()`,
+      [sessionToken],
+    )
 
     if (result.length === 0) {
       return null
@@ -106,7 +108,7 @@ export async function validateSession(sessionToken: string): Promise<{ user: Use
 export async function invalidateSession(sessionToken: string): Promise<void> {
   try {
     await ensureTablesExist()
-    await executeQuery`DELETE FROM sessions WHERE id = ${sessionToken}`
+    await simpleQuery("DELETE FROM sessions WHERE id = $1", [sessionToken])
   } catch (error) {
     console.error("Session invalidation error:", error)
     // Don't throw here as logout should always succeed
@@ -116,10 +118,10 @@ export async function invalidateSession(sessionToken: string): Promise<void> {
 export async function cleanupExpiredSessions(): Promise<void> {
   try {
     await ensureTablesExist()
-    const result = await executeQuery<{ count: number }>`
-      DELETE FROM sessions WHERE expires_at < NOW()
-      RETURNING COUNT(*) as count
-    `
+    const result = await simpleQuery<{ count: number }>(
+      "DELETE FROM sessions WHERE expires_at < NOW() RETURNING COUNT(*) as count",
+      [],
+    )
     console.log(`Cleaned up ${result[0]?.count || 0} expired sessions`)
   } catch (error) {
     console.error("Session cleanup error:", error)
@@ -129,9 +131,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
 export async function getUser(userId: number): Promise<User | null> {
   try {
     await ensureTablesExist()
-    const result = await executeQuery<User>`
-      SELECT id, email, name FROM users WHERE id = ${userId}
-    `
+    const result = await simpleQuery<User>("SELECT id, email, name FROM users WHERE id = $1", [userId])
     return result[0] || null
   } catch (error) {
     console.error("Get user error:", error)
@@ -177,9 +177,9 @@ export async function createUser(name: string, email: string, password: string):
     }
 
     // Check if user already exists
-    const existingUser = await executeQuery<{ id: number }>`
-      SELECT id FROM users WHERE email = ${email.toLowerCase().trim()}
-    `
+    const existingUser = await simpleQuery<{ id: number }>("SELECT id FROM users WHERE email = $1", [
+      email.toLowerCase().trim(),
+    ])
 
     if (existingUser.length > 0) {
       throw new Error("User already exists")
@@ -188,11 +188,10 @@ export async function createUser(name: string, email: string, password: string):
     // Hash password and create user
     const passwordHash = await hashPassword(password)
 
-    const result = await executeQuery<User>`
-      INSERT INTO users (name, email, password_hash)
-      VALUES (${name.trim()}, ${email.toLowerCase().trim()}, ${passwordHash})
-      RETURNING id, name, email
-    `
+    const result = await simpleQuery<User>(
+      "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email",
+      [name.trim(), email.toLowerCase().trim(), passwordHash],
+    )
 
     return result[0]
   } catch (error) {
@@ -211,16 +210,12 @@ export async function authenticateUser(email: string, password: string): Promise
     }
 
     // Find user
-    const result = await executeQuery<{
+    const result = await simpleQuery<{
       id: number
       email: string
       name: string
       password_hash: string
-    }>`
-      SELECT id, email, name, password_hash 
-      FROM users 
-      WHERE email = ${email.toLowerCase().trim()}
-    `
+    }>("SELECT id, email, name, password_hash FROM users WHERE email = $1", [email.toLowerCase().trim()])
 
     const user = result[0]
     if (!user) {

@@ -1,20 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['@neondatabase/serverless'],
+    serverComponentsExternalPackages: ['@neondatabase/serverless', 'bcryptjs'],
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
-    domains: ['placeholder.svg'],
     unoptimized: true,
   },
-  env: {
-    DATABASE_URL: process.env.DATABASE_URL,
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push('@neondatabase/serverless')
+    }
+    return config
   },
 }
 

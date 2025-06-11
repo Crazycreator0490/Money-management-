@@ -2,7 +2,11 @@ import { neon } from "@neondatabase/serverless"
 import { env, validateEnvironment } from "./env"
 
 // Validate environment on module load
-validateEnvironment()
+try {
+  validateEnvironment()
+} catch (error) {
+  console.error("Environment validation failed:", error)
+}
 
 // Create a singleton Neon client with proper configuration
 let neonClient: ReturnType<typeof neon> | null = null
@@ -17,9 +21,6 @@ export function getNeonClient() {
       neonClient = neon(env.DATABASE_URL, {
         fullResults: true,
         arrayMode: false,
-        // Connection pooling configuration
-        connectionTimeoutMillis: 10000,
-        idleTimeoutMillis: 30000,
       })
     } catch (error) {
       console.error("Failed to initialize Neon client:", error)
@@ -31,14 +32,21 @@ export function getNeonClient() {
 }
 
 // Helper function for database operations with comprehensive error handling
-export async function executeQuery<T = any>(query: TemplateStringsArray, ...values: any[]): Promise<T[]> {
+export async function executeQuery<T = any>(strings: TemplateStringsArray, ...values: any[]): Promise<T[]> {
   const maxRetries = 3
   let lastError: Error | null = null
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const sql = getNeonClient()
-      const result = await sql(query, ...values)
+
+      // Construct the query string manually for better compatibility
+      let query = strings[0]
+      for (let i = 0; i < values.length; i++) {
+        query += "$" + (i + 1) + strings[i + 1]
+      }
+
+      const result = await sql(query, values)
       return result as T[]
     } catch (error) {
       lastError = error as Error
@@ -64,6 +72,18 @@ export async function executeQuery<T = any>(query: TemplateStringsArray, ...valu
   }
 
   throw new Error(`Database operation failed after ${maxRetries} attempts: ${lastError?.message}`)
+}
+
+// Simplified query function for basic operations
+export async function simpleQuery<T = any>(queryText: string, params: any[] = []): Promise<T[]> {
+  try {
+    const sql = getNeonClient()
+    const result = await sql(queryText, params)
+    return result as T[]
+  } catch (error) {
+    console.error("Simple query failed:", error)
+    throw error
+  }
 }
 
 // Health check function with timeout
