@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { checkNeonConnection, getConnectionInfo } from "@/lib/neon-client"
 import { getInitializationStatus } from "@/lib/db-init"
-import { env, validateEnvironment } from "@/lib/env"
+import { env, validateEnvironment, getDatabaseConnectionDetails } from "@/lib/env"
 
 export async function GET() {
   const startTime = Date.now()
@@ -18,6 +18,9 @@ export async function GET() {
     // Connection info
     const connectionInfo = await getConnectionInfo()
 
+    // Database connection details
+    const dbDetails = getDatabaseConnectionDetails()
+
     // Database initialization status
     const initStatus = getInitializationStatus()
 
@@ -33,6 +36,18 @@ export async function GET() {
         nodeEnv: env.NODE_ENV,
         isVercel: !!env.VERCEL_URL,
         vercelEnv: env.VERCEL_ENV || "not-set",
+        customKeyConfigured: !!env.CUSTOM_KEY,
+        sessionSecretConfigured: !!env.SESSION_SECRET,
+        variables: {
+          DATABASE_URL: !!env.DATABASE_URL,
+          POSTGRES_HOST: !!env.POSTGRES_HOST,
+          POSTGRES_USER: !!env.POSTGRES_USER,
+          POSTGRES_PASSWORD: !!env.POSTGRES_PASSWORD,
+          POSTGRES_DATABASE: !!env.POSTGRES_DATABASE,
+          CUSTOM_KEY: !!env.CUSTOM_KEY,
+          SESSION_SECRET: !!env.SESSION_SECRET,
+          NEXTAUTH_URL: !!env.NEXTAUTH_URL,
+        },
       },
 
       database: {
@@ -41,6 +56,7 @@ export async function GET() {
         error: dbHealth.error,
         details: dbHealth.details,
         initialization: initStatus,
+        connectionDetails: dbDetails,
       },
 
       connection: connectionInfo,
@@ -49,6 +65,7 @@ export async function GET() {
         memory: process.memoryUsage(),
         uptime: process.uptime(),
         version: process.version,
+        platform: process.platform,
       },
     }
 
@@ -56,6 +73,7 @@ export async function GET() {
       status: health.status,
       responseTime: health.responseTime,
       dbHealthy: dbHealth.healthy,
+      envValid: envValidation.valid,
     })
 
     return NextResponse.json(health, {

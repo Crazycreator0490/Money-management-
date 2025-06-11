@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "db:check": "node -e \"console.log('Database URL:', process.env.DATABASE_URL ? 'configured' : 'missing')\""
+    "env:check": "node -e \"console.log('Environment Check:'); console.log('DATABASE_URL:', process.env.DATABASE_URL ? '✅ configured' : '❌ missing'); console.log('CUSTOM_KEY:', process.env.CUSTOM_KEY ? '✅ configured' : '❌ missing'); console.log('NODE_ENV:', process.env.NODE_ENV || 'development');\"",
+    "env:list": "node -e \"const vars = ['DATABASE_URL', 'POSTGRES_URL', 'CUSTOM_KEY', 'NODE_ENV', 'NEXTAUTH_URL', 'SESSION_SECRET']; vars.forEach(v => console.log(v + ':', process.env[v] ? '✅' : '❌'));\"",
+    "db:check": "curl -s http://localhost:3000/api/health | jq '.database.healthy' || echo 'Health check failed'",
+    "setup:verify": "curl -s http://localhost:3000/api/setup-env | jq '.status' || echo 'Setup verification failed'"
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",
