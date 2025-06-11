@@ -13,11 +13,6 @@ const nextConfig = {
     unoptimized: true,
   },
   
-  // Webpack configuration
-  webpack: (config) => {
-    return config
-  },
-  
   // Headers for security
   async headers() {
     return [
