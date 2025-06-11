@@ -4,20 +4,8 @@ import { useState } from "react"
 import { Plus, Trash2, DollarSign, PieChart } from "lucide-react"
 import BudgetChart from "./budget-chart"
 import BudgetComparison from "./budget-comparison"
-
-type IncomeSource = {
-  id: number
-  name: string
-  amount: number
-}
-
-type BudgetCategory = {
-  id: number
-  name: string
-  planned_amount: number
-  actual_amount: number
-  color: string
-}
+import BudgetTemplates from "./budget-templates"
+import type { IncomeSource, BudgetCategory, BudgetTemplate } from "@/lib/types"
 
 const colorOptions = [
   "bg-red-500",
@@ -37,6 +25,7 @@ export default function BudgetPlannerClient() {
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([])
   const [newIncome, setNewIncome] = useState({ name: "", amount: "" })
   const [newCategory, setNewCategory] = useState({ name: "", amount: "", color: "bg-blue-500" })
+  const [showTemplates, setShowTemplates] = useState(false)
 
   const addIncomeSource = () => {
     if (newIncome.name && newIncome.amount) {
@@ -80,6 +69,32 @@ export default function BudgetPlannerClient() {
     )
   }
 
+  const handleLoadTemplate = (template: BudgetTemplate) => {
+    // Clear existing data
+    setIncomeSources([])
+    setBudgetCategories([])
+
+    // Load template income sources
+    const newIncomeSources = template.income.map((income, index) => ({
+      id: Date.now() + index,
+      name: income.name,
+      amount: income.amount,
+    }))
+
+    // Load template categories
+    const newCategories = template.categories.map((category, index) => ({
+      id: Date.now() + index + 1000,
+      name: category.name,
+      planned_amount: category.amount,
+      actual_amount: 0,
+      color: colorOptions[index % colorOptions.length],
+    }))
+
+    setIncomeSources(newIncomeSources)
+    setBudgetCategories(newCategories)
+    setShowTemplates(false)
+  }
+
   const totalIncome = incomeSources.reduce((sum, income) => sum + income.amount, 0)
   const totalPlanned = budgetCategories.reduce((sum, category) => sum + category.planned_amount, 0)
   const totalActual = budgetCategories.reduce((sum, category) => sum + category.actual_amount, 0)
@@ -90,6 +105,41 @@ export default function BudgetPlannerClient() {
         <h1 className="text-3xl font-bold">Budget Planner</h1>
         <p className="text-gray-600">Plan and track your monthly budget to achieve your financial goals.</p>
       </div>
+
+      {/* Templates Section */}
+      {(incomeSources.length === 0 || budgetCategories.length === 0) && !showTemplates && (
+        <div className="card bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-semibold text-green-800">🚀 Quick Start</h2>
+              <p className="text-green-700">New to budgeting? Try one of our pre-made templates!</p>
+            </div>
+            <button onClick={() => setShowTemplates(true)} className="btn btn-primary">
+              Browse Templates
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showTemplates && (
+        <div className="card">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Choose a Budget Template</h2>
+            <button onClick={() => setShowTemplates(false)} className="text-gray-500 hover:text-gray-700">
+              ✕ Close
+            </button>
+          </div>
+          <BudgetTemplates onLoadTemplate={handleLoadTemplate} />
+        </div>
+      )}
+
+      {!showTemplates && (incomeSources.length > 0 || budgetCategories.length > 0) && (
+        <div className="flex justify-center">
+          <button onClick={() => setShowTemplates(true)} className="btn bg-gray-100 text-gray-700 hover:bg-gray-200">
+            Browse Budget Templates
+          </button>
+        </div>
+      )}
 
       {/* Income Sources */}
       <div className="card">

@@ -1,8 +1,8 @@
 "use client"
+
 import { useState } from "react"
 import { Plus, Calendar, Tag, DollarSign, TrendingDown } from "lucide-react"
-import { addExpense } from "@/app/actions/expense-actions"
-import type { Expense } from "@/lib/db"
+import type { Expense } from "@/lib/types"
 
 const expenseCategories = [
   "Food & Dining",
@@ -25,23 +25,15 @@ export default function ExpenseTrackerClient() {
     expense_date: new Date().toISOString().split("T")[0],
   })
 
-  const handleAddExpense = async () => {
+  const handleAddExpense = () => {
     if (!newExpense.amount || !newExpense.description) return
 
-    const expenseData = {
+    const expense: Expense = {
+      id: Date.now(),
       amount: Number.parseFloat(newExpense.amount),
       description: newExpense.description,
       category: newExpense.category,
-      expenseDate: newExpense.expense_date,
-    }
-
-    // Optimistically update UI
-    const expense: Expense = {
-      id: Date.now(),
-      amount: expenseData.amount,
-      description: expenseData.description,
-      category: expenseData.category,
-      expense_date: expenseData.expenseDate,
+      expense_date: newExpense.expense_date,
       created_at: new Date().toISOString(),
     }
 
@@ -52,8 +44,6 @@ export default function ExpenseTrackerClient() {
       category: "Food & Dining",
       expense_date: new Date().toISOString().split("T")[0],
     })
-
-    await addExpense(expenseData.amount, expenseData.description, expenseData.category, expenseData.expenseDate)
   }
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)

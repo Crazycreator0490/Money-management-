@@ -2,67 +2,61 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 
-type ChartData = {
-  name: string
-  value: number
-  color: string
+interface BudgetChartProps {
+  categories: Array<{
+    id: number
+    name: string
+    planned_amount: number
+    actual_amount: number
+    color: string
+  }>
 }
 
-type BudgetChartProps = {
-  data: ChartData[]
+const COLORS = {
+  "bg-red-500": "#ef4444",
+  "bg-blue-500": "#3b82f6",
+  "bg-green-500": "#10b981",
+  "bg-yellow-500": "#f59e0b",
+  "bg-purple-500": "#8b5cf6",
+  "bg-pink-500": "#ec4899",
+  "bg-indigo-500": "#6366f1",
+  "bg-orange-500": "#f97316",
+  "bg-teal-500": "#14b8a6",
+  "bg-gray-500": "#6b7280",
 }
 
-export default function BudgetChart({ data }: BudgetChartProps) {
-  // Convert Tailwind color classes to actual colors
-  const getColor = (colorClass: string) => {
-    const colorMap: Record<string, string> = {
-      "blue-500": "#3B82F6",
-      "green-500": "#10B981",
-      "yellow-500": "#F59E0B",
-      "purple-500": "#8B5CF6",
-      "pink-500": "#EC4899",
-      "indigo-500": "#6366F1",
-      "red-500": "#EF4444",
-      "orange-500": "#F97316",
-    }
-
-    return colorMap[colorClass] || "#3B82F6"
-  }
-
-  // Filter out zero values
-  const filteredData = data.filter((item) => item.value > 0)
-
-  if (filteredData.length === 0) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-gray-500 italic">No data to display</p>
-      </div>
-    )
-  }
+export default function BudgetChart({ categories }: BudgetChartProps) {
+  const data = categories.map((category) => ({
+    name: category.name,
+    value: category.planned_amount,
+    color: COLORS[category.color as keyof typeof COLORS] || "#6b7280",
+  }))
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={filteredData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-          nameKey="name"
-        >
-          {filteredData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={getColor(entry.color)} />
-          ))}
-        </Pie>
-        <Tooltip
-          formatter={(value: number) => `${value.toFixed(2)} AED`}
-          contentStyle={{ borderRadius: "0.5rem", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
-        />
-        <Legend layout="vertical" verticalAlign="middle" align="right" />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="card">
+      <h3 className="text-lg font-semibold mb-4">Budget Distribution</h3>
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Amount"]} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   )
 }

@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { Calculator, Target, PiggyBank } from "lucide-react"
-import { addSavingsGoal } from "@/app/actions/savings-actions"
-import type { SavingsGoal } from "@/lib/db"
+import type { SavingsGoal } from "@/lib/types"
 
 export default function SavingsCalculatorClient() {
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([])
@@ -35,7 +35,7 @@ export default function SavingsCalculatorClient() {
     }
   }
 
-  const handleSaveGoal = async () => {
+  const handleSaveGoal = () => {
     if (!newGoal.goal_name || !newGoal.target_amount || !newGoal.monthly_contribution) return
 
     const goal: SavingsGoal = {
@@ -48,12 +48,6 @@ export default function SavingsCalculatorClient() {
     }
 
     setSavingsGoals([...savingsGoals, goal])
-
-    await addSavingsGoal(
-      newGoal.goal_name,
-      Number.parseFloat(newGoal.target_amount),
-      Number.parseFloat(newGoal.monthly_contribution),
-    )
 
     setNewGoal({
       goal_name: "",
