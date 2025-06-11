@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { randomBytes } from "crypto"
-import { simpleQuery } from "./neon-client"
+import { executeQuery } from "./neon-client"
 import { ensureTablesExist } from "./db-init"
 import { env } from "./env"
 
@@ -18,17 +18,22 @@ export type Session = {
   expiresAt: Date
 }
 
-// Enhanced password hashing with configurable rounds
+// Enhanced password hashing
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = env.NODE_ENV === "production" ? 12 : 10
-  return bcrypt.hash(password, saltRounds)
+  try {
+    const saltRounds = env.NODE_ENV === "production" ? 12 : 10
+    return await bcrypt.hash(password, saltRounds)
+  } catch (error) {
+    console.error("❌ Password hashing failed:", error)
+    throw new Error("Password processing failed")
+  }
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   try {
     return await bcrypt.compare(password, hashedPassword)
   } catch (error) {
-    console.error("Password verification error:", error)
+    console.error("❌ Password verification failed:", error)
     return false
   }
 }
@@ -44,7 +49,7 @@ export async function createSession(userId: number): Promise<string> {
     const sessionToken = generateSessionToken()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-    await simpleQuery("INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)", [
+    await executeQuery("INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)", [
       sessionToken,
       userId,
       expiresAt,
@@ -52,7 +57,7 @@ export async function createSession(userId: number): Promise<string> {
 
     return sessionToken
   } catch (error) {
-    console.error("Session creation error:", error)
+    console.error("❌ Session creation failed:", error)
     throw new Error("Failed to create session")
   }
 }
@@ -61,7 +66,7 @@ export async function validateSession(sessionToken: string): Promise<{ user: Use
   try {
     await ensureTablesExist()
 
-    const result = await simpleQuery<{
+    const result = await executeQuery<{
       session_id: string
       user_id: number
       expires_at: string
@@ -100,7 +105,7 @@ export async function validateSession(sessionToken: string): Promise<{ user: Use
       },
     }
   } catch (error) {
-    console.error("Session validation error:", error)
+    console.error("❌ Session validation failed:", error)
     return null
   }
 }
@@ -108,9 +113,9 @@ export async function validateSession(sessionToken: string): Promise<{ user: Use
 export async function invalidateSession(sessionToken: string): Promise<void> {
   try {
     await ensureTablesExist()
-    await simpleQuery("DELETE FROM sessions WHERE id = $1", [sessionToken])
+    await executeQuery("DELETE FROM sessions WHERE id = $1", [sessionToken])
   } catch (error) {
-    console.error("Session invalidation error:", error)
+    console.error("❌ Session invalidation failed:", error)
     // Don't throw here as logout should always succeed
   }
 }
@@ -118,24 +123,13 @@ export async function invalidateSession(sessionToken: string): Promise<void> {
 export async function cleanupExpiredSessions(): Promise<void> {
   try {
     await ensureTablesExist()
-    const result = await simpleQuery<{ count: number }>(
+    const result = await executeQuery<{ count: number }>(
       "DELETE FROM sessions WHERE expires_at < NOW() RETURNING COUNT(*) as count",
       [],
     )
-    console.log(`Cleaned up ${result[0]?.count || 0} expired sessions`)
+    console.log(`🧹 Cleaned up ${result[0]?.count || 0} expired sessions`)
   } catch (error) {
-    console.error("Session cleanup error:", error)
-  }
-}
-
-export async function getUser(userId: number): Promise<User | null> {
-  try {
-    await ensureTablesExist()
-    const result = await simpleQuery<User>("SELECT id, email, name FROM users WHERE id = $1", [userId])
-    return result[0] || null
-  } catch (error) {
-    console.error("Get user error:", error)
-    return null
+    console.error("❌ Session cleanup failed:", error)
   }
 }
 
@@ -149,7 +143,7 @@ export async function getCurrentUser(): Promise<User | null> {
     const sessionData = await validateSession(sessionToken)
     return sessionData?.user || null
   } catch (error) {
-    console.error("Get current user error:", error)
+    console.error("❌ Get current user failed:", error)
     return null
   }
 }
@@ -162,7 +156,6 @@ export async function requireAuth(): Promise<User> {
   return user
 }
 
-// Enhanced user creation with validation
 export async function createUser(name: string, email: string, password: string): Promise<User> {
   try {
     await ensureTablesExist()
@@ -177,7 +170,7 @@ export async function createUser(name: string, email: string, password: string):
     }
 
     // Check if user already exists
-    const existingUser = await simpleQuery<{ id: number }>("SELECT id FROM users WHERE email = $1", [
+    const existingUser = await executeQuery<{ id: number }>("SELECT id FROM users WHERE email = $1", [
       email.toLowerCase().trim(),
     ])
 
@@ -188,19 +181,18 @@ export async function createUser(name: string, email: string, password: string):
     // Hash password and create user
     const passwordHash = await hashPassword(password)
 
-    const result = await simpleQuery<User>(
+    const result = await executeQuery<User>(
       "INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email",
       [name.trim(), email.toLowerCase().trim(), passwordHash],
     )
 
     return result[0]
   } catch (error) {
-    console.error("User creation error:", error)
+    console.error("❌ User creation failed:", error)
     throw error
   }
 }
 
-// Enhanced user authentication
 export async function authenticateUser(email: string, password: string): Promise<User> {
   try {
     await ensureTablesExist()
@@ -210,7 +202,7 @@ export async function authenticateUser(email: string, password: string): Promise
     }
 
     // Find user
-    const result = await simpleQuery<{
+    const result = await executeQuery<{
       id: number
       email: string
       name: string
@@ -234,7 +226,7 @@ export async function authenticateUser(email: string, password: string): Promise
       name: user.name,
     }
   } catch (error) {
-    console.error("Authentication error:", error)
+    console.error("❌ Authentication failed:", error)
     throw error
   }
 }

@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint --fix",
-    "type-check": "tsc --noEmit"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "db:check": "node -e \"console.log('Database URL:', process.env.DATABASE_URL ? 'configured' : 'missing')\""
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",
@@ -36,6 +37,7 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=18.17.0"
+    "node": ">=18.17.0",
+    "npm": ">=8.0.0"
   }
 }
